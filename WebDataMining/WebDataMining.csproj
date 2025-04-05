@@ -1,0 +1,55 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <Nullable>disable</Nullable>
+    <BaseOutputPath>bin\</BaseOutputPath>
+    <Title>WebDataMining</Title>
+    <Version>1.0.0.0</Version>
+    <Authors>Gleryston Matos</Authors>
+    <Company>GM</Company>
+    <Product>$(AssemblyName)</Product>
+    <Description>Ferramenta para mineração de dados da web</Description>
+    <Copyright>Gleryston Matos</Copyright>
+    <PackageIcon>GM.png</PackageIcon>
+    <PackageOutputPath></PackageOutputPath>
+    <PackageProjectUrl>https://github.com/GlerystonMatos/web-data-mining</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/GlerystonMatos/web-data-mining</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageId>$(AssemblyName)</PackageId>
+    <NeutralLanguage>pt-BR</NeutralLanguage>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <WarningLevel>8</WarningLevel>
+    <Optimize>False</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <WarningLevel>8</WarningLevel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="icon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\GM.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TextToAsciiArt" Version="1.0.14.15" />
+  </ItemGroup>
+
+</Project>
