@@ -1,15 +1,12 @@
-﻿using System.Net.Http;
+﻿using HtmlAgilityPack;
+using System.Diagnostics;
 using System.Reflection;
-using System.Threading.Tasks;
 using TextToAsciiArt;
 
 namespace WebDataMining
 {
     public class Program
     {
-        public static string extensaoDownload = "";
-        public static int tentativasDownload = 0;
-
         public static async Task Main(string[] args)
         {
             Introducao();
@@ -20,31 +17,33 @@ namespace WebDataMining
 
         #region Program
 
-        public static void ShowProgram()
+        public static void BemVindo()
         {
             IArtWriter writer = new ArtWriter();
 
             ArtSetting settings = new ArtSetting();
             settings.Text = "|";
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
-
             Console.Clear();
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("------------------------------------------------------------------------------------\n");
             writer.WriteConsole("WEB", settings);
             Console.WriteLine(" ");
             writer.WriteConsole("DATA", settings);
             Console.WriteLine(" ");
             writer.WriteConsole("MINING", settings);
-            Console.WriteLine("\n-----------------------------------------------------------------------------------");
+            Console.WriteLine("\n------------------------------------------------------------------------------------");
 
             Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine("                                                               BY GLERYSTON MATOS    ");
+            Console.WriteLine("  V 1.0.0.1                                                    BY GLERYSTON MATOS    ");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("------------------------------------------------------------------------------------");
         }
 
         public static void Introducao()
         {
-            ShowProgram();
+            BemVindo();
             Carregando();
         }
 
@@ -73,42 +72,18 @@ namespace WebDataMining
 
         public static async Task Iniciar()
         {
-            string opcao = ObterOpcoes();
+            string opcao = Menu();
             Console.ResetColor();
 
             switch (opcao)
             {
                 case "1":
-                    await DownloadCapitulosMangas();
+                    await DownloadCapitulosMangas("");
                     break;
             }
         }
 
-        public static async Task Continuar()
-        {
-            string opcao = SelecionarOutraOpcao("Deseja selecionar outra opção?");
-
-            while (opcao.ToUpper().Equals("S"))
-            {
-                await Iniciar();
-                opcao = SelecionarOutraOpcao("Deseja selecionar outra opção?");
-            }
-        }
-
-        public static void Adeus()
-        {
-            ShowProgram();
-            Console.WriteLine("ATÉ A PRÓXIMA ");
-
-            Console.ResetColor();
-            Thread.Sleep(2000);
-        }
-
-        #endregion
-
-        #region Functions
-
-        public static string ObterOpcoes()
+        public static string Menu()
         {
             Dictionary<string, string> opcoes = new Dictionary<string, string>
             {
@@ -149,7 +124,32 @@ namespace WebDataMining
             return codigo;
         }
 
-        public static string SelecionarOutraOpcao(string pergunta)
+        public static async Task Continuar()
+        {
+            string opcao = Confirmacao("Deseja selecionar outra opção?");
+
+            while (opcao.ToUpper().Equals("S"))
+            {
+                await Iniciar();
+                opcao = Confirmacao("Deseja selecionar outra opção?");
+            }
+        }
+
+        public static void Adeus()
+        {
+            BemVindo();
+            Console.WriteLine("ATÉ A PRÓXIMA ");
+            Console.WriteLine("------------------------------------------------------------------------------------");
+
+            Console.ResetColor();
+            Thread.Sleep(2000);
+        }
+
+        #endregion
+
+        #region Functions
+
+        public static string Confirmacao(string pergunta)
         {
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Blue;
@@ -158,10 +158,12 @@ namespace WebDataMining
             Console.ResetColor();
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.Write("(S/N):");
-            return Console.ReadLine();
+
+            string resposta = Console.ReadLine();
+            return resposta.ToUpper();
         }
 
-        public static string FazerPergunta(string pergunta)
+        public static string Pergunta(string pergunta)
         {
             Console.ForegroundColor = ConsoleColor.Blue;
             Console.WriteLine($"\n{pergunta}");
@@ -172,95 +174,86 @@ namespace WebDataMining
             return Console.ReadLine();
         }
 
-        public static async Task<byte[]> Download(string link, int pagina, string extensao)
+        public static IList<string> ObterLinksDeImagens(string html)
         {
-            HttpClient httpClient = new HttpClient();
+            IList<string> listaSrc = new List<string>();
+            HtmlDocument htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(html);
 
-            try
+            HtmlNodeCollection imagens = htmlDoc.DocumentNode.SelectNodes("//img[@src]");
+            if (imagens != null)
             {
-                if (tentativasDownload > 3)
-                    throw new Exception("Numero máximo de tentativas de download excedido!");
+                foreach (HtmlNode img in imagens)
+                {
+                    string src = img.GetAttributeValue("src", "");
+                    if (!string.IsNullOrWhiteSpace(src))
+                        listaSrc.Add(src);
+                }
+            }
 
-                tentativasDownload += 1;
-                extensaoDownload = extensao;
-                return await httpClient.GetByteArrayAsync($"{link}{pagina}.{extensao}");
-            }
-            catch 
-            {
-                if (extensao.Equals("jpg"))
-                    return await Download(link, pagina, "png");
-                else if (extensao.Equals("png"))
-                    return await Download(link, pagina, "webp");
-                else if (extensao.Equals("webp"))
-                    return await Download(link, pagina, "jpg");
-                else
-                    return null;
-            }
+            return listaSrc;
         }
 
         #endregion
 
         #region DownloadCapitulosMangas
 
-        public static async Task<string> DownloadCapitulosMangas()
+        public static async Task<string> DownloadCapitulosMangas(string manga)
         {
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("Download de capítulos de mangas");
 
-            string manga = FazerPergunta("Informe o nome do manga:");
-            string quantidadeCapitulos = FazerPergunta("Quantos capítulos deseja baixar?");
+            if (string.IsNullOrEmpty(manga))
+                manga = Pergunta("Informe o nome do manga:");
 
-            string capitulo = "";
-            string link = "";
-            string quantidadePaginas = "";
+            string capitulo = Pergunta("Informe o capítulo do manga:");
 
-            for (int i = 0; i < int.Parse(quantidadeCapitulos); i++)
-            {
-                link = FazerPergunta("Informe o link de download da última página do capítulo:");
+            string html = Pergunta("Informe o elemento com os links de download das páginas:");
+            IList<string> links = ObterLinksDeImagens(html);
 
-                extensaoDownload = link.Split(".")[3];
-                capitulo = link.Split("_")[2];
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Download de capítulos de mangas");
 
-                quantidadePaginas = link.Split("_")[3];
-                quantidadePaginas = quantidadePaginas.Replace($".{extensaoDownload}", "");
-
-                link = link.Replace(link.Split("_")[3], "");
-
-                await FazerDownload(manga, capitulo, link, quantidadePaginas, extensaoDownload);
-            }
-
-            string opcao = SelecionarOutraOpcao("Deseja baixar mais capítulos?");
-
-            while (opcao.ToUpper().Equals("S"))
-                opcao = await DownloadCapitulosMangas();
-
-            return opcao;
-        }
-
-        public static async Task FazerDownload(string manga, string capitulo, string link, string quantidadePaginas, string extensao)
-        {
             Console.ResetColor();
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine($"\n({manga} Cap: {capitulo})");
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.Write("\nBaixando");
+            Console.Write($"\nBaixando");
 
             string caminhoExe = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string caminhoDownload = $"{caminhoExe}\\Download\\{manga} {capitulo}\\";
+            string pastaDownload = $"{caminhoExe}\\Download";
+            string pastaManga = $"{pastaDownload}\\{manga} {capitulo}\\";
 
-            Directory.CreateDirectory(caminhoDownload);
-            for (int pagina = 0; pagina < (int.Parse(quantidadePaginas) + 1); pagina++)
+            Directory.CreateDirectory(pastaManga);
+
+            int pagina = 0;
+            foreach (string link in links)
             {
+                pagina += 1;
                 Console.Write(".");
-                
-                tentativasDownload = 0;
-                byte[] bytes = await Download(link, pagina, extensao);
-                
-                await File.WriteAllBytesAsync($"{caminhoDownload}\\{pagina.ToString()}.{extensaoDownload}", bytes);
+                string extensao = link.Split(".")[3];
+
+                HttpClient httpClient = new HttpClient();
+                byte[] bytes = await httpClient.GetByteArrayAsync(link);
+                await File.WriteAllBytesAsync($"{pastaManga}\\{pagina.ToString()}.{extensao}", bytes);
             }
 
             Console.ResetColor();
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine(" ");
+
+            string abrirDiretorio = Confirmacao("Deseja abrir o diretório de download?");
+            if (abrirDiretorio.Equals("S"))
+                Process.Start("explorer.exe", $"{pastaDownload}\\");
+
+            string opcao = Confirmacao("Deseja baixar mais capítulos?");
+
+            while (opcao.ToUpper().Equals("S"))
+                opcao = await DownloadCapitulosMangas(manga);
+
+            return opcao;
         }
 
         #endregion
