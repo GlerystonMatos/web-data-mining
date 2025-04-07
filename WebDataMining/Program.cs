@@ -2,11 +2,14 @@
 {
     public class Program
     {
-        private static string _versao = "1.0.0.1";
+        private static string _versao = "1.0.2.0";
 
         private static Dictionary<string, string> _opcoes = new Dictionary<string, string>
         {
-            { "1", "Realizar download de capítulos de mangas" },
+            { "1", "Realizar download de capítulos de mangas (Html)" },
+            { "2", "Realizar download de capítulos de mangas (Link base)" },
+            { "", "" },
+            { "0", "Sobre" },
         };
 
         public static async Task Main(string[] args)
@@ -23,7 +26,13 @@
             switch (opcao)
             {
                 case "1":
-                    await DownloadCapituloManga.Iniciar(_versao, "", "");
+                    await DownloadCapituloMangaHtml.Iniciar(_versao, "", "");
+                    break;
+                case "2":
+                    await DownloadCapituloMangaLinkBase.Iniciar(_versao, "", "");
+                    break;
+                case "0":
+                    Utils.BemVindo(_versao);
                     break;
             }
 
@@ -57,7 +66,10 @@
             Console.WriteLine("\nOpções:");
 
             foreach (var opcao in _opcoes)
-                Console.WriteLine($"{opcao.Key}: {opcao.Value}");
+                if (!string.IsNullOrEmpty(opcao.Key))
+                    Console.WriteLine($"{opcao.Key} - {opcao.Value}");
+                else
+                    Console.WriteLine(" ");
 
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.Write("\nInforme uma das opções disponíveis: ");

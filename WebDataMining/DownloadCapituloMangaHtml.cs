@@ -3,12 +3,12 @@ using System.Reflection;
 
 namespace WebDataMining
 {
-    public class DownloadCapituloManga
+    public class DownloadCapituloMangaHtml
     {
         public static async Task<string> Iniciar(string versao, string manga, string capitulo)
         {
             Utils.Topo(versao);
-            Console.WriteLine("\n1: Realizar download de capítulos de mangas\n");
+            Console.WriteLine("\n1: Realizar download de capítulos de mangas (Html)\n");
 
             if (string.IsNullOrEmpty(manga))
                 manga = Utils.Pergunta("Informe o nome do manga:");
@@ -21,7 +21,7 @@ namespace WebDataMining
 
             Console.Clear();
             Utils.Topo(versao);
-            Console.WriteLine("\n1: Realizar download de capítulos de mangas\n");
+            Console.WriteLine("\n1: Realizar download de capítulos de mangas (Html)\n");
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($" Manga: {manga} - Capítulo: {capitulo} ");
