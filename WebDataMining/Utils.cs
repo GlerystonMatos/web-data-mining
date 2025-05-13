@@ -22,9 +22,7 @@ namespace WebDataMining
             Console.ForegroundColor = ConsoleColor.Yellow;
 
             Console.WriteLine("------------------------------------------------------------------------------------\n");
-            writer.WriteConsole("WEB", settings);
-            Console.WriteLine(" ");
-            writer.WriteConsole("DATA", settings);
+            writer.WriteConsole("WEB DATA", settings);
             Console.WriteLine(" ");
             writer.WriteConsole("MINING", settings);
             Console.WriteLine("\n------------------------------------------------------------------------------------");
@@ -68,9 +66,9 @@ namespace WebDataMining
         {
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("------------------------------------------------------------------------------------");
-            Console.WriteLine($" WEB DATA MINING | BY GLERYSTON MATOS | VERSÃO {versao}                             |");
-            Console.WriteLine("------------------------------------------------------------------------------------");
+            Console.WriteLine("--------------------------------------------------------");
+            Console.WriteLine($" WEB DATA MINING | BY GLERYSTON MATOS | VERSÃO {versao} |");
+            Console.WriteLine("--------------------------------------------------------");
         }
 
         public static string Confirmacao(string pergunta)
@@ -107,8 +105,19 @@ namespace WebDataMining
                 foreach (HtmlNode img in imagens)
                 {
                     string src = img.GetAttributeValue("src", "");
-                    if (!string.IsNullOrWhiteSpace(src))
-                        listaSrc.Add(src);
+                    if ((!string.IsNullOrWhiteSpace(src)) && (!src.Contains("data:image")) && (!src.Contains("avatar")))
+                        listaSrc.Add(src.Trim());
+                }
+            }
+
+            HtmlNodeCollection dataImagens = htmlDoc.DocumentNode.SelectNodes("//img[@data-src]");
+            if (dataImagens != null)
+            {
+                foreach (HtmlNode img in dataImagens)
+                {
+                    string src = img.GetAttributeValue("data-src", "");
+                    if ((!string.IsNullOrWhiteSpace(src)) && (!src.Contains("data:image")) && (!src.Contains("avatar")))
+                        listaSrc.Add(src.Trim());
                 }
             }
 
