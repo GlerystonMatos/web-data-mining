@@ -1,4 +1,6 @@
 ﻿using HtmlAgilityPack;
+using System.Diagnostics;
+using System.Reflection;
 using TextToAsciiArt;
 
 namespace WebDataMining
@@ -122,6 +124,14 @@ namespace WebDataMining
             }
 
             return listaSrc;
+        }
+
+        public static void AbrirDiretorioDownloadArquivos()
+        {
+            string caminhoExe = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string pastaManga = $"{caminhoExe}\\Download\\";
+            Directory.CreateDirectory(pastaManga);
+            Process.Start("explorer.exe", pastaManga);
         }
     }
 }

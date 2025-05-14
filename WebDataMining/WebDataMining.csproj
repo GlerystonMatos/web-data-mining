@@ -8,7 +8,7 @@
     <Nullable>disable</Nullable>
     <BaseOutputPath>bin\</BaseOutputPath>
     <Title>WebDataMining</Title>
-    <Version>1.0.3.0</Version>
+    <Version>1.0.4.0</Version>
     <Authors>Gleryston Matos</Authors>
     <Company>GM</Company>
     <Product>$(AssemblyName)</Product>

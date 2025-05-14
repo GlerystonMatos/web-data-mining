@@ -2,13 +2,14 @@
 {
     public class Program
     {
-        private static string _versao = "1.0.3.0";
+        private static string _versao = "1.0.4.0";
 
         private static Dictionary<string, string> _opcoes = new Dictionary<string, string>
         {
             { "1", "Realizar download de capítulos de mangas (Html)" },
             { "2", "Realizar download de capítulos de mangas (Link base)" },
             { "3", "Realizar download de capítulos de mangas (Link da página)" },
+            { "4", "Abrir diretório de download dos arquivos" },
             { "", "" },
             { "0", "Sobre" },
         };
@@ -34,6 +35,9 @@
                     break;
                 case "3":
                     await DownloadCapituloMangaLinkPagina.Iniciar(_versao, "", "");
+                    break;
+                case "4":
+                    Utils.AbrirDiretorioDownloadArquivos();
                     break;
                 case "0":
                     Utils.BemVindo(_versao);

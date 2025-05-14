@@ -8,13 +8,18 @@ namespace WebDataMining
         public static async Task<string> Iniciar(string versao, string manga, string capitulo)
         {
             Utils.Topo(versao);
-            Console.WriteLine("\n1: Realizar download de capítulos de mangas (Link da página)\n");
+            Console.WriteLine("\n3: Realizar download de capítulos de mangas (Link da página)\n");
 
             if (string.IsNullOrEmpty(manga))
                 manga = Utils.Pergunta("Informe o nome do manga:");
 
             if (string.IsNullOrEmpty(capitulo))
                 capitulo = Utils.Pergunta("Informe o capítulo do manga:");
+
+            Console.Clear();
+            Utils.Topo(versao);
+            Console.WriteLine("\n3: Realizar download de capítulos de mangas (Link da página)");
+            Console.WriteLine($"Manga: {manga} - Capítulo: {int.Parse(capitulo).ToString("D3")}\n");
 
             string linkPagina = Utils.Pergunta("Informe o link da página:");
 
@@ -24,7 +29,7 @@ namespace WebDataMining
 
             Console.Clear();
             Utils.Topo(versao);
-            Console.WriteLine("\n1: Realizar download de capítulos de mangas (Link da página)\n");
+            Console.WriteLine("\n3: Realizar download de capítulos de mangas (Link da página)\n");
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($" Manga: {manga} - Capítulo: {int.Parse(capitulo).ToString("D3")} ");
