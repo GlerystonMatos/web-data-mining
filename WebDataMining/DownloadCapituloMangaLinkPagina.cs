@@ -36,27 +36,70 @@ namespace WebDataMining
             Console.Write($" Baixando");
 
             string caminhoExe = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string pastaManga = $"{caminhoExe}\\Download\\{manga} - Capítulo {int.Parse(capitulo).ToString("D3")}\\";
+            string pastaManga = $"{caminhoExe}\\Download\\{manga}\\{manga} - Capítulo {int.Parse(capitulo).ToString("D3")}\\";
 
             Directory.CreateDirectory(pastaManga);
+
+            IList<string> erros = new List<string>();
+            erros.Clear();
 
             int pagina = 0;
             foreach (string link in links)
             {
                 pagina += 1;
-                Console.Write(".");
                 string extensao = link.Split(".")[link.Split(".").Length - 1];
 
-                Thread.Sleep(500);
-                byte[] bytes = await httpClient.GetByteArrayAsync(link);
+                try
+                {
+                    Thread.Sleep(500);
+                    byte[] bytes = await httpClient.GetByteArrayAsync(link);
 
-                if (!extensao.Equals("webp"))
-                    await File.WriteAllBytesAsync($"{pastaManga}\\{pagina.ToString()}.{extensao}", bytes);
-                else
-                    await File.WriteAllBytesAsync($"{pastaManga}\\{pagina.ToString()}.jpg", bytes);
+                    if (!extensao.Equals("webp"))
+                        await File.WriteAllBytesAsync($"{pastaManga}\\{pagina.ToString()}.{extensao}", bytes);
+                    else
+                        await File.WriteAllBytesAsync($"{pastaManga}\\{pagina.ToString()}.jpg", bytes);
+
+                    Console.Write(".");
+                }
+                catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write(".");
+                    Console.ForegroundColor = ConsoleColor.Green;
+
+                    erros.Add($"Recurso não encontrado (404) para o link: {link}");
+                }
+                catch (HttpRequestException ex)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write(".");
+                    Console.ForegroundColor = ConsoleColor.Green;
+
+                    erros.Add($"Erro HTTP ao acessar o link: {link}. Código: {ex.StatusCode}");
+                }
+                catch (Exception ex)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write(".");
+                    Console.ForegroundColor = ConsoleColor.Green;
+
+                    erros.Add($"Erro inesperado: {ex.Message}");
+                }
             }
 
-            Console.WriteLine("\n");
+            if (erros.Count() > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"\n\nOcorreram alguns erros:");
+
+                foreach (string erro in erros)
+                    Console.WriteLine($"{erro}");
+
+                Console.WriteLine("");
+            }
+            else
+                Console.WriteLine("\n");
+
             string abrirDiretorio = Utils.Confirmacao("Deseja abrir o diretório de download?");
             if (abrirDiretorio.Equals("S"))
                 Process.Start("explorer.exe", pastaManga);
