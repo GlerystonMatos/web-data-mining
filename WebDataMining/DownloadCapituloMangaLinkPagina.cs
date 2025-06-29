@@ -5,111 +5,214 @@ namespace WebDataMining
 {
     public class DownloadCapituloMangaLinkPagina
     {
+        private static int _pagina = 0;
+        private static string _manga = "";
+        private static string _versao = "";
+        private static string _capitulo = "";
+        private static string _caminhoExe = "";
+        private static string _pastaManga = "";
+
+        private static HttpClient _httpClient;
+        private static HashSet<string> _erros;
+        private static HashSet<string> _links;
+        private static HashSet<int> _paginasComErro;
+
         public static async Task<string> Iniciar(string versao, string manga, string capitulo)
         {
+            _httpClient = new HttpClient();
+
+            ObterInformacoes(versao, manga, capitulo);
+            string linkCapitulo = ObterLinkCapitulo();
+
+            string html = await _httpClient.GetStringAsync(linkCapitulo);
+            _links = Utils.ObterLinksDeImagens(html);
+
+            await BaixarCapituloAsync();
+            DownloadConcluido();
+
+            string opcao = Utils.Confirmacao("Deseja baixar mais capítulos?");
+            while (opcao.ToUpper().Equals("S"))
+                opcao = await Iniciar(_versao, _manga, (int.Parse(_capitulo) + 1).ToString());
+
+            return opcao;
+        }
+
+        private static void Topo(string versao)
+        {
+            Console.Clear();
             Utils.Topo(versao);
-            Console.WriteLine("\n3: Realizar download de capítulos de mangas (Link da página)\n");
+            Console.Write("| ");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write("Opção: Realizar download de capítulos de mangas");
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.Write("       |\n");
+            Console.WriteLine("---------------------------------------------------------");
+        }
+
+        private static void ObterInformacoes(string versao, string manga, string capitulo)
+        {
+            Topo(versao);
+            _versao = versao;
+
+            Console.WriteLine("");
 
             if (string.IsNullOrEmpty(manga))
-                manga = Utils.Pergunta("Informe o nome do manga:");
+                _manga = Utils.Pergunta("Informe o nome do manga:");
+            else
+                _manga = manga;
 
             if (string.IsNullOrEmpty(capitulo))
-                capitulo = Utils.Pergunta("Informe o capítulo do manga:");
+                _capitulo = Utils.Pergunta("Informe o capítulo do manga:");
+            else
+                _capitulo = capitulo;
+        }
 
-            Console.Clear();
-            Utils.Topo(versao);
-            Console.WriteLine("\n3: Realizar download de capítulos de mangas (Link da página)");
-            Console.WriteLine($"Manga: {manga} - Capítulo: {int.Parse(capitulo).ToString("D3")}\n");
+        private static string ObterLinkCapitulo()
+        {
+            Topo(_versao);
 
-            string linkPagina = Utils.Pergunta("Informe o link da página:");
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.WriteLine($"\nManga: {_manga} - Capítulo: {int.Parse(_capitulo).ToString("D3")}");
 
-            HttpClient httpClient = new HttpClient();
-            string html = await httpClient.GetStringAsync(linkPagina);
-            IList<string> links = Utils.ObterLinksDeImagens(html);
+            return Utils.Pergunta("Informe o link do capítulo:");
+        }
 
-            Console.Clear();
-            Utils.Topo(versao);
-            Console.WriteLine("\n3: Realizar download de capítulos de mangas (Link da página)\n");
+        private static async Task BaixarCapituloAsync()
+        {
+            InicializarDadosDownload();
+            await RealizarDownloadsAsync();
+            ExibirErros();
+        }
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($" Manga: {manga} - Capítulo: {int.Parse(capitulo).ToString("D3")} ");
-            Console.Write($" Baixando");
+        private static void InicializarDadosDownload()
+        {
+            _caminhoExe = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            _pastaManga = $"{_caminhoExe}\\Download\\{_manga}\\{_manga} - Capítulo {int.Parse(_capitulo).ToString("D3")}\\";
 
-            string caminhoExe = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string pastaManga = $"{caminhoExe}\\Download\\{manga}\\{manga} - Capítulo {int.Parse(capitulo).ToString("D3")}\\";
+            _paginasComErro = new HashSet<int>();
+            _erros = new HashSet<string>();
 
-            Directory.CreateDirectory(pastaManga);
+            _pagina = 0;
 
-            IList<string> erros = new List<string>();
-            erros.Clear();
+            Directory.CreateDirectory(_pastaManga);
+        }
 
-            int pagina = 0;
-            foreach (string link in links)
+        private static async Task RealizarDownloadsAsync()
+        {
+            foreach (string link in _links)
             {
-                pagina += 1;
-                string extensao = link.Split(".")[link.Split(".").Length - 1];
-
                 try
                 {
-                    Thread.Sleep(500);
-                    byte[] bytes = await httpClient.GetByteArrayAsync(link);
-
-                    if (!extensao.Equals("webp"))
-                        await File.WriteAllBytesAsync($"{pastaManga}\\{pagina.ToString()}.{extensao}", bytes);
-                    else
-                        await File.WriteAllBytesAsync($"{pastaManga}\\{pagina.ToString()}.jpg", bytes);
-
-                    Console.Write(".");
+                    await RealizarDownloadAsync(link);
                 }
                 catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write(".");
-                    Console.ForegroundColor = ConsoleColor.Green;
-
-                    erros.Add($"Recurso não encontrado (404) para o link: {link}");
+                    ItemConcluidoErro();
+                    _paginasComErro.Add(_pagina);
+                    _erros.Add($"Recurso não encontrado (404) para o link: {link}");
                 }
                 catch (HttpRequestException ex)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write(".");
-                    Console.ForegroundColor = ConsoleColor.Green;
-
-                    erros.Add($"Erro HTTP ao acessar o link: {link}. Código: {ex.StatusCode}");
+                    ItemConcluidoErro();
+                    _paginasComErro.Add(_pagina);
+                    _erros.Add($"Erro HTTP ao acessar o link: {link}. Código: {ex.StatusCode}");
                 }
                 catch (Exception ex)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write(".");
-                    Console.ForegroundColor = ConsoleColor.Green;
-
-                    erros.Add($"Erro inesperado: {ex.Message}");
+                    ItemConcluidoErro();
+                    _paginasComErro.Add(_pagina);
+                    _erros.Add($"Erro inesperado: {ex.Message}");
                 }
             }
+        }
 
-            if (erros.Count() > 0)
+        private static async Task RealizarDownloadAsync(string link)
+        {
+            Topo(_versao);
+
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.WriteLine($"\n Manga: {_manga} - Capítulo: {int.Parse(_capitulo).ToString("D3")}");
+            Console.Write($" Baixando: ");
+
+            IndicadorDownload();
+            PercentualConclusao();
+
+            Thread.Sleep(10);
+
+            string extensao = link.Split(".")[link.Split(".").Length - 1];
+            byte[] bytes = await _httpClient.GetByteArrayAsync(link);
+            _pagina += 1;
+
+            if (!extensao.Equals("webp"))
+                await File.WriteAllBytesAsync($"{_pastaManga}\\{_pagina.ToString()}.{extensao}", bytes);
+            else
+                await File.WriteAllBytesAsync($"{_pastaManga}\\{_pagina.ToString()}.jpg", bytes);
+
+            ItensConcluidos();
+        }
+
+        private static void IndicadorDownload()
+        {
+            if (_pagina % 2 == 0)
+                Console.Write("\\");
+            else
+                Console.Write("/");
+        }
+
+        private static void PercentualConclusao()
+        {
+            int percentual = ((_pagina * 100) / _links.Count());
+            Console.Write($" {percentual}% ");
+        }
+
+        private static void ItensConcluidos()
+        {
+            for (int i = 1; i <= _pagina; i++)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
+                Thread.Sleep(10);
+
+                if (_paginasComErro.Contains(i))
+                    ItemConcluidoErro();
+                else
+                    Console.Write(".");
+            }
+        }
+
+        private static void ItemConcluidoErro()
+        {
+            Console.ForegroundColor = ConsoleColor.DarkRed;
+            Console.Write(".");
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+        }
+
+        private static void ExibirErros()
+        {
+            if (_erros.Count() > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkRed;
                 Console.WriteLine($"\n\nOcorreram alguns erros:");
 
-                foreach (string erro in erros)
+                foreach (string erro in _erros)
                     Console.WriteLine($"{erro}");
 
                 Console.WriteLine("");
             }
             else
                 Console.WriteLine("\n");
+        }
+
+        private static void DownloadConcluido()
+        {
+            Topo(_versao);
+
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.Write($"\nManga: {_manga} - Capítulo: {int.Parse(_capitulo).ToString("D3")} - Download: ");
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.Write($"100%\n");
 
             string abrirDiretorio = Utils.Confirmacao("Deseja abrir o diretório de download?");
             if (abrirDiretorio.Equals("S"))
-                Process.Start("explorer.exe", pastaManga);
-
-            string opcao = Utils.Confirmacao("Deseja baixar mais capítulos?");
-
-            while (opcao.ToUpper().Equals("S"))
-                opcao = await Iniciar(versao, manga, (int.Parse(capitulo) + 1).ToString());
-
-            return opcao;
+                Process.Start("explorer.exe", _pastaManga);
         }
     }
 }

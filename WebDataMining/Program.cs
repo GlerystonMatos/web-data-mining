@@ -2,14 +2,12 @@
 {
     public class Program
     {
-        private static string _versao = "1.0.5.0";
+        private static string _versao = "1.0.6.0";
 
         private static Dictionary<string, string> _opcoes = new Dictionary<string, string>
         {
-            { "1", "Realizar download de capítulos de mangas (Html)" },
-            { "2", "Realizar download de capítulos de mangas (Link base)" },
-            { "3", "Realizar download de capítulos de mangas (Link da página)" },
-            { "4", "Abrir diretório de download dos arquivos" },
+            { "1", "Realizar download de capítulos de mangas" },
+            { "2", "Abrir diretório de download dos arquivos" },
             { "", "" },
             { "0", "Sobre" },
         };
@@ -28,15 +26,9 @@
             switch (opcao)
             {
                 case "1":
-                    await DownloadCapituloMangaHtml.Iniciar(_versao, "", "");
-                    break;
-                case "2":
-                    await DownloadCapituloMangaLinkBase.Iniciar(_versao, "", "");
-                    break;
-                case "3":
                     await DownloadCapituloMangaLinkPagina.Iniciar(_versao, "", "");
                     break;
-                case "4":
+                case "2":
                     Utils.AbrirDiretorioDownloadArquivos();
                     break;
                 case "0":
@@ -59,10 +51,9 @@
             {
                 Utils.Topo(_versao);
 
-                Console.ForegroundColor = ConsoleColor.Red;
+                Console.ForegroundColor = ConsoleColor.DarkRed;
                 Console.WriteLine("\nOpção selecionada invalida, selecione uma das opções disponíveis!");
 
-                Console.ForegroundColor = ConsoleColor.Yellow;
                 codigo = SelecionarOpcao();
             }
 
@@ -71,20 +62,25 @@
 
         public static string SelecionarOpcao()
         {
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
             Console.WriteLine("\nOpções:");
 
             foreach (var opcao in _opcoes)
                 if (!string.IsNullOrEmpty(opcao.Key))
-                    Console.WriteLine($"{opcao.Key} - {opcao.Value}");
+                {
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.Write($"{opcao.Key} - ");
+                    Console.ForegroundColor = ConsoleColor.DarkCyan;
+                    Console.Write($"{opcao.Value}\n");
+                }
                 else
                     Console.WriteLine(" ");
 
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.Write("\nInforme uma das opções disponíveis: ");
-            string opcaoSelecionada = Console.ReadLine();
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            return opcaoSelecionada;
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            return Console.ReadLine();
         }
     }
 }

@@ -16,88 +16,103 @@ namespace WebDataMining
         public static void BemVindo(string versao)
         {
             IArtWriter writer = new ArtWriter();
-
             ArtSetting settings = new ArtSetting();
-            settings.Text = "|";
+            settings.Text = "/";
 
             Console.Clear();
-            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
 
-            Console.WriteLine("------------------------------------------------------------------------------------\n");
+            Console.WriteLine("");
             writer.WriteConsole("WEB DATA", settings);
-            Console.WriteLine(" ");
+            Console.WriteLine("");
             writer.WriteConsole("MINING", settings);
-            Console.WriteLine("\n------------------------------------------------------------------------------------");
-            Console.WriteLine($" BY GLERYSTON MATOS | VERSÃO {versao}                                               |");
-            Console.WriteLine("------------------------------------------------------------------------------------");
+
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine($"\n\n VERSÃO: {versao}\n");
         }
 
         public static void Carregando()
         {
-            Console.ForegroundColor = ConsoleColor.Green;
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.Write(" Carregando: [");
 
-            Console.Write(" Carregando");
             Thread.Sleep(500);
-            Console.Write(".");
+            Console.Write("//");
             Thread.Sleep(500);
-            Console.Write(".");
-            Thread.Sleep(500);
-            Console.Write(".");
-            Thread.Sleep(500);
-            Console.Write(".");
-            Thread.Sleep(500);
-            Console.Write(".");
-            Thread.Sleep(500);
-            Console.Write(".");
+            Console.Write("//");
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
+            Thread.Sleep(500);
+            Console.Write("//");
+            Thread.Sleep(500);
+            Console.Write("//");
+
+            Thread.Sleep(500);
+            Console.Write("//");
+            Thread.Sleep(500);
+            Console.Write("//");
+
+            Console.Write("] 100%");
+            Thread.Sleep(1000);
         }
 
         public static void Adeus(string versao)
         {
             BemVindo(versao);
 
-            Console.WriteLine(" ATÉ A PRÓXIMA                                                                     |");
-            Console.WriteLine("------------------------------------------------------------------------------------");
-
-            Console.ResetColor();
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.WriteLine(" ATÉ A PRÓXIMA !!!");
+            Console.ForegroundColor = ConsoleColor.Gray;
             Thread.Sleep(2000);
         }
 
         public static void Topo(string versao)
         {
             Console.Clear();
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("--------------------------------------------------------");
-            Console.WriteLine($" WEB DATA MINING | BY GLERYSTON MATOS | VERSÃO {versao} |");
-            Console.WriteLine("--------------------------------------------------------");
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.WriteLine("---------------------------------------------------------");
+            Console.Write("| ");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write("WEB DATA MINING");
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.Write(" | ");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write("BY GLERYSTON MATOS");
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.Write(" | ");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write($"VERSÃO {versao}");
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.Write(" |\n");
+            Console.WriteLine("---------------------------------------------------------");
         }
 
         public static string Confirmacao(string pergunta)
         {
             Console.ForegroundColor = ConsoleColor.Gray;
-
             Console.Write($"{pergunta} (S/N): ");
+
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
             string resposta = Console.ReadLine();
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
             return resposta.ToUpper();
         }
 
         public static string Pergunta(string pergunta)
         {
             Console.ForegroundColor = ConsoleColor.Gray;
-
             Console.Write($"{pergunta} ");
+
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
             string resposta = Console.ReadLine();
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
             return resposta;
         }
 
-        public static IList<string> ObterLinksDeImagens(string html)
+        public static HashSet<string> ObterLinksDeImagens(string html)
         {
-            IList<string> listaSrc = new List<string>();
+            HashSet<string> listaSrc = new HashSet<string>();
             HtmlDocument htmlDoc = new HtmlDocument();
             htmlDoc.LoadHtml(html);
 
@@ -130,6 +145,7 @@ namespace WebDataMining
         {
             string caminhoExe = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string pastaManga = $"{caminhoExe}\\Download\\";
+
             Directory.CreateDirectory(pastaManga);
             Process.Start("explorer.exe", pastaManga);
         }
