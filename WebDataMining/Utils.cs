@@ -122,7 +122,8 @@ namespace WebDataMining
                 foreach (HtmlNode img in imagens)
                 {
                     string src = img.GetAttributeValue("src", "");
-                    if ((!string.IsNullOrWhiteSpace(src)) && (!src.Contains("data:image")) && (!src.Contains("avatar")))
+                    if ((!string.IsNullOrWhiteSpace(src)) && (!src.Contains("data:image")) && (!src.ToLower().Contains("avatar")) &&
+                        (!src.ToLower().Contains("logo")) && (src.ToLower().Contains("wp-manga")))
                         listaSrc.Add(src.Trim());
                 }
             }
@@ -133,7 +134,8 @@ namespace WebDataMining
                 foreach (HtmlNode img in dataImagens)
                 {
                     string src = img.GetAttributeValue("data-src", "");
-                    if ((!string.IsNullOrWhiteSpace(src)) && (!src.Contains("data:image")) && (!src.Contains("avatar")))
+                    if ((!string.IsNullOrWhiteSpace(src)) && (!src.Contains("data:image")) && (!src.ToLower().Contains("avatar")) &&
+                        (!src.ToLower().Contains("logo")) && (src.ToLower().Contains("wp-manga")))
                         listaSrc.Add(src.Trim());
                 }
             }

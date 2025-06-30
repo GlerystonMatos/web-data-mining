@@ -2,7 +2,7 @@
 {
     public class Program
     {
-        private static string _versao = "1.0.6.0";
+        private static string _versao = "1.0.7.0";
 
         private static Dictionary<string, string> _opcoes = new Dictionary<string, string>
         {
@@ -26,7 +26,7 @@
             switch (opcao)
             {
                 case "1":
-                    await DownloadCapituloMangaLinkPagina.Iniciar(_versao, "", "");
+                    await DownloadCapituloMangaLinkPagina.Iniciar(_versao, "");
                     break;
                 case "2":
                     Utils.AbrirDiretorioDownloadArquivos();

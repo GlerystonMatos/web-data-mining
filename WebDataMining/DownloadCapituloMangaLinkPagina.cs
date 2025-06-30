@@ -6,6 +6,8 @@ namespace WebDataMining
     public class DownloadCapituloMangaLinkPagina
     {
         private static int _pagina = 0;
+        private static int _quantidade = 0;
+
         private static string _manga = "";
         private static string _versao = "";
         private static string _capitulo = "";
@@ -13,28 +15,58 @@ namespace WebDataMining
         private static string _pastaManga = "";
 
         private static HttpClient _httpClient;
+
         private static HashSet<string> _erros;
         private static HashSet<string> _links;
+        private static HashSet<string> _concluidos;
         private static HashSet<int> _paginasComErro;
 
-        public static async Task<string> Iniciar(string versao, string manga, string capitulo)
+        public static async Task<string> Iniciar(string versao, string manga)
         {
             _httpClient = new HttpClient();
+            _concluidos = new HashSet<string>();
 
-            ObterInformacoes(versao, manga, capitulo);
-            string linkCapitulo = ObterLinkCapitulo();
+            ObterInformacoes(versao, manga);
+            string linkBase = ObterLinkCapitulo();
 
-            string html = await _httpClient.GetStringAsync(linkCapitulo);
-            _links = Utils.ObterLinksDeImagens(html);
+            for (int capitulos = 1; capitulos <= _quantidade; capitulos++)
+            {
+                string linkCapitulo = IncluirCapituloLink(linkBase);
+                string html = await _httpClient.GetStringAsync(linkCapitulo);
 
-            await BaixarCapituloAsync();
-            DownloadConcluido();
+                _links = Utils.ObterLinksDeImagens(html);
+                await BaixarCapituloAsync();
+                DownloadConcluido();
+
+                _capitulo = (int.Parse(_capitulo) + 1).ToString();
+            }
+
+            ExibirConcluidos();
+
+            if (_quantidade > 1)
+                AbrirDiretorioDownloadArquivos();
 
             string opcao = Utils.Confirmacao("Deseja baixar mais capítulos?");
             while (opcao.ToUpper().Equals("S"))
-                opcao = await Iniciar(_versao, _manga, (int.Parse(_capitulo) + 1).ToString());
+                opcao = await Iniciar(_versao, _manga);
 
             return opcao;
+        }
+
+        private static void ObterInformacoes(string versao, string manga)
+        {
+            Topo(versao);
+            _versao = versao;
+
+            Console.WriteLine("");
+
+            if (string.IsNullOrEmpty(manga))
+                _manga = Utils.Pergunta("Informe o nome do manga:");
+            else
+                _manga = manga;
+
+            _quantidade = int.Parse(Utils.Pergunta("Informe a quantidade de capítulos:"));
+            _capitulo = Utils.Pergunta("Informe o primeiro capítulo:");
         }
 
         private static void Topo(string versao)
@@ -49,24 +81,6 @@ namespace WebDataMining
             Console.WriteLine("---------------------------------------------------------");
         }
 
-        private static void ObterInformacoes(string versao, string manga, string capitulo)
-        {
-            Topo(versao);
-            _versao = versao;
-
-            Console.WriteLine("");
-
-            if (string.IsNullOrEmpty(manga))
-                _manga = Utils.Pergunta("Informe o nome do manga:");
-            else
-                _manga = manga;
-
-            if (string.IsNullOrEmpty(capitulo))
-                _capitulo = Utils.Pergunta("Informe o capítulo do manga:");
-            else
-                _capitulo = capitulo;
-        }
-
         private static string ObterLinkCapitulo()
         {
             Topo(_versao);
@@ -74,8 +88,14 @@ namespace WebDataMining
             Console.ForegroundColor = ConsoleColor.DarkCyan;
             Console.WriteLine($"\nManga: {_manga} - Capítulo: {int.Parse(_capitulo).ToString("D3")}");
 
-            return Utils.Pergunta("Informe o link do capítulo:");
+            Console.WriteLine("\nInforme o link de download do primeiro capítulo");
+            Console.WriteLine("Use {ref-cap} para que o capítulo seja atualizado automaticamente\n");
+
+            return Utils.Pergunta("Link:");
         }
+
+        private static string IncluirCapituloLink(string linkCapitulo)
+            => linkCapitulo.Replace("{ref-cap}", _capitulo);
 
         private static async Task BaixarCapituloAsync()
         {
@@ -167,11 +187,11 @@ namespace WebDataMining
 
         private static void ItensConcluidos()
         {
-            for (int i = 1; i <= _pagina; i++)
+            for (int pagina = 1; pagina <= _pagina; pagina++)
             {
                 Thread.Sleep(10);
 
-                if (_paginasComErro.Contains(i))
+                if (_paginasComErro.Contains(pagina))
                     ItemConcluidoErro();
                 else
                     Console.Write(".");
@@ -196,6 +216,10 @@ namespace WebDataMining
                     Console.WriteLine($"{erro}");
 
                 Console.WriteLine("");
+
+                Console.ForegroundColor = ConsoleColor.DarkYellow;
+                Console.WriteLine("Aperte qualquer tecla para continuar");
+                Console.ReadLine();
             }
             else
                 Console.WriteLine("\n");
@@ -203,16 +227,55 @@ namespace WebDataMining
 
         private static void DownloadConcluido()
         {
-            Topo(_versao);
+            string concluido = $"Manga: {_manga} - Capítulo: {int.Parse(_capitulo).ToString("D3")} - Download: ";
+            _concluidos.Add(concluido);
 
-            Console.ForegroundColor = ConsoleColor.DarkCyan;
-            Console.Write($"\nManga: {_manga} - Capítulo: {int.Parse(_capitulo).ToString("D3")} - Download: ");
-            Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.Write($"100%\n");
+            if (_quantidade == 1)
+            {
+                Topo(_versao);
 
-            string abrirDiretorio = Utils.Confirmacao("Deseja abrir o diretório de download?");
+                Console.WriteLine("");
+                Console.ForegroundColor = ConsoleColor.DarkCyan;
+                Console.Write(concluido);
+                Console.ForegroundColor = ConsoleColor.DarkGreen;
+                Console.Write($"100%\n");
+                Console.WriteLine("");
+
+                AbrirDiretorioDownloadManga();
+            }
+        }
+
+        private static void AbrirDiretorioDownloadManga()
+        {
+            string abrirDiretorio = Utils.Confirmacao("Deseja abrir o diretório de download do manga?");
             if (abrirDiretorio.Equals("S"))
                 Process.Start("explorer.exe", _pastaManga);
+        }
+
+        private static void AbrirDiretorioDownloadArquivos()
+        {
+            string abrirDiretorio = Utils.Confirmacao("Deseja abrir o diretório de download?");
+            if (abrirDiretorio.Equals("S"))
+                Utils.AbrirDiretorioDownloadArquivos();
+        }
+
+        private static void ExibirConcluidos()
+        {
+            if (_concluidos.Count() > 0)
+            {
+                Topo(_versao);
+                Console.WriteLine("");
+
+                foreach (string concluido in _concluidos)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkCyan;
+                    Console.Write(concluido);
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
+                    Console.Write($"100%\n");
+                }
+
+                Console.WriteLine("");
+            }
         }
     }
 }
