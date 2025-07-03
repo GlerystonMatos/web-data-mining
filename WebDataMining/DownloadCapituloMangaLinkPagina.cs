@@ -27,18 +27,17 @@ namespace WebDataMining
             _concluidos = new HashSet<string>();
 
             ObterInformacoes(versao, manga);
-            string linkBase = ObterLinkCapitulo();
+            IList<string> links = ObterLinksCapitulos();
 
-            for (int capitulos = 1; capitulos <= _quantidade; capitulos++)
+            if (links.Count() == 1)
             {
-                string linkCapitulo = IncluirCapituloLink(linkBase);
-                string html = await _httpClient.GetStringAsync(linkCapitulo);
-
-                _links = Utils.ObterLinksDeImagens(html);
-                await BaixarCapituloAsync();
-                DownloadConcluido();
-
-                _capitulo = (int.Parse(_capitulo) + 1).ToString();
+                for (int contador = 1; contador <= _quantidade; contador++)
+                    await RealizarDownloadLinkAsync(links[0]);
+            }
+            else
+            {
+                foreach (string link in links)
+                    await RealizarDownloadLinkAsync(link);
             }
 
             ExibirConcluidos();
@@ -69,6 +68,18 @@ namespace WebDataMining
             _capitulo = Utils.Pergunta("Informe o primeiro capítulo:");
         }
 
+        private static async Task RealizarDownloadLinkAsync(string link)
+        {
+            string linkCapitulo = IncluirCapituloLink(link);
+            string html = await _httpClient.GetStringAsync(linkCapitulo);
+
+            _links = Utils.ObterLinksDeImagens(html);
+            await BaixarCapituloAsync();
+            DownloadConcluido();
+
+            _capitulo = (int.Parse(_capitulo) + 1).ToString();
+        }
+
         private static void Topo(string versao)
         {
             Console.Clear();
@@ -81,17 +92,30 @@ namespace WebDataMining
             Console.WriteLine("---------------------------------------------------------");
         }
 
-        private static string ObterLinkCapitulo()
+        private static IList<string> ObterLinksCapitulos()
         {
             Topo(_versao);
 
             Console.ForegroundColor = ConsoleColor.DarkCyan;
-            Console.WriteLine($"\nManga: {_manga} - Capítulo: {int.Parse(_capitulo).ToString("D3")}");
+            Console.WriteLine($"\nManga: {_manga} - Capítulo: {int.Parse(_capitulo).ToString("D3")}\n");
 
-            Console.WriteLine("\nInforme o link de download do primeiro capítulo");
-            Console.WriteLine("Use {ref-cap} para que o capítulo seja atualizado automaticamente\n");
+            IList<string> links = new List<string>();
 
-            return Utils.Pergunta("Link:");
+            string opcao = Utils.Confirmacao("Deseja informar todos os links de download?");
+            if (opcao.ToUpper().Equals("S"))
+            {
+                for (int contador = 1; contador <= _quantidade; contador++)
+                    links.Add(Utils.Pergunta($"Link capítulo {((int.Parse(_capitulo) + contador) - 1).ToString("D3")}:"));
+            }
+            else
+            {
+                Console.WriteLine("Informe o link de download do primeiro capítulo");
+                Console.WriteLine("Use {ref-cap} para que o capítulo seja atualizado automaticamente\n");
+
+                links.Add(Utils.Pergunta("Link:"));
+            }
+
+            return links;
         }
 
         private static string IncluirCapituloLink(string linkCapitulo)
@@ -149,6 +173,19 @@ namespace WebDataMining
         private static async Task RealizarDownloadAsync(string link)
         {
             Topo(_versao);
+
+            if (_concluidos.Count() > 0)
+            {
+                Console.WriteLine("");
+
+                foreach (string concluido in _concluidos)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkCyan;
+                    Console.Write(concluido);
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
+                    Console.Write($"100%\n");
+                }
+            }
 
             Console.ForegroundColor = ConsoleColor.DarkGreen;
             Console.WriteLine($"\n Manga: {_manga} - Capítulo: {int.Parse(_capitulo).ToString("D3")}");

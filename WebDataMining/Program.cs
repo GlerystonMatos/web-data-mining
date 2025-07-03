@@ -2,7 +2,7 @@
 {
     public class Program
     {
-        private static string _versao = "1.0.7.0";
+        private static string _versao = "1.0.8.0";
 
         private static Dictionary<string, string> _opcoes = new Dictionary<string, string>
         {
